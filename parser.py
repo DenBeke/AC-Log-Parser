@@ -17,16 +17,21 @@ class Player:
 	
 	def __init__(self):
 		
-		self.name 		= ""
+		self.name 			= ""
+		self.ip				= ""
+		self.visits			= 0
+		self.time			= 0
 		
-		self.killactions = {}
-		self.flagactions	= {}
+		self.killactions 	= {}
+		self.flagactions		= {}
 				
-		self.kills		= 0
-		self.killed		= 0
-		self.teamkills  	= 0
-		self.teamkilled 	= 0
-		self.suicides	= 0
+		self.kills			= 0
+		self.killed			= 0
+		self.teamkills  		= 0
+		self.teamkilled 		= 0
+		self.flagteamkills	= 0
+		self.flagteamkilled	= 0
+		self.suicides		= 0
 		
 		
 	def incrementKillAction(self, action):
@@ -71,11 +76,20 @@ class LogParser:
 			"scored",
 			"returned",
 			"lost",
-			"stole"
+			"stole",
+			"dropped",
+			"hunted",
+			"forced to pickup",
+			"carrying"
 		]
 		
+		self.flagbearer = None
+				
 		self.teamkillMessage = "their teammate"
 		self.suicideMessage = "suicided"
+		
+		self.playerConnected = "logged in"
+		self.playerDisconnected = "disconnected client"
 		
 		self.patternLine = re.compile("\[[0-9\.]*\]") # regex matching all lines that are interesting
 		
@@ -114,6 +128,25 @@ class LogParser:
 				return
 
 			
+			# Played connects
+			if line.find(self.playerConnected) >= 0:
+				self.getPlayer(actor).ip = items[0][1:-1]
+			
+			# Played disconnects
+			elif line.find(self.playerDisconnected) >= 0:
+				actor = items[3]
+				
+				if actor == "cn":
+					#special case for empty player name
+					return
+				
+				time = int(items[6])
+				
+				self.getPlayer(actor).visits += 1
+				self.getPlayer(actor).time += time
+				return
+			
+			
 			# Loop through all the kill actions
 			for a in self.killActions:
 				if line.find(a) >= 0:
@@ -138,11 +171,28 @@ class LogParser:
 							self.getPlayer(target).teamkilled += 1
 							self.total["teamkills"] += 1
 							
+							if self.flagbearer == target:
+								self.getPlayer(actor).flagteamkills += 1
+								self.getPlayer(target).flagteamkilled += 1
+								self.flagbearer = None
+							
 			
 			# Loop through all the flag actions
 			for a in self.flagActions:
 				if line.find(a) >= 0:
 					self.getPlayer(actor).incrementFlagAction(a)
+					
+					if a in ["stole","forced to pickup"]:
+						self.flagbearer = actor
+					
+					else:
+						self.flagbearer = None
+
+
+
+	def __getstate__(self):
+		
+		return {"total": self.total, "players": self.players}
 
 
 
@@ -153,4 +203,7 @@ if __name__ == "__main__":
 	for line in sys.stdin:
 		p.parseline(line)
 		
-	print json.dumps(json.loads(jsonpickle.encode(p, unpicklable=False)), indent=4) 
+	json = json.dumps(json.loads(jsonpickle.encode(p, unpicklable=False)), indent=4)
+	
+	print json
+	
