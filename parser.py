@@ -115,7 +115,7 @@ class LogParser:
 		if self.patternLine.match(line):
 			
 			# Look for the names of the actor / target
-			items = line.split()	
+			items = line.split()
 			actor = ""
 			target = ""
 			teamkill = False
@@ -123,16 +123,17 @@ class LogParser:
 			# Line too short, we're not interested
 			if len(items) > 2:
 				actor = items[1]
-				target = items[-1]				
+				target = items[-1]
 			else:
 				return
 
 			
-			# Played connects
+			# Player connects
 			if line.find(self.playerConnected) >= 0:
 				self.getPlayer(actor).ip = items[0][1:-1]
+				return
 			
-			# Played disconnects
+			# Player disconnects
 			elif line.find(self.playerDisconnected) >= 0:
 				actor = items[3]
 				
@@ -145,7 +146,7 @@ class LogParser:
 				self.getPlayer(actor).visits += 1
 				self.getPlayer(actor).time += time
 				return
-			
+				
 			
 			# Loop through all the kill actions
 			for a in self.killActions:
@@ -175,6 +176,11 @@ class LogParser:
 								self.getPlayer(actor).flagteamkills += 1
 								self.getPlayer(target).flagteamkilled += 1
 								self.flagbearer = None
+					
+					if self.getPlayer(actor).ip == "":
+						# set ip if ip not yet set
+						# this is needed for when players change name
+						self.getPlayer(actor).ip = items[0][1:-1]
 							
 			
 			# Loop through all the flag actions
@@ -187,6 +193,11 @@ class LogParser:
 					
 					else:
 						self.flagbearer = None
+						
+					if self.getPlayer(actor).ip == "":
+						# set ip if ip not yet set
+						# this is needed for when players change name
+						self.getPlayer(actor).ip = items[0][1:-1]
 
 
 
