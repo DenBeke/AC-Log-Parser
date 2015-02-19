@@ -47,6 +47,13 @@ class Player:
 			self.flagactions[action] += 1
 		else:
 			self.flagactions[action] = 1
+			
+	def decrementFlagAction(self, action):
+		
+		if self.flagactions.has_key(action):
+			self.flagactions[action] -= 1
+		else:
+			self.flagactions[action] = 0
 
 
 class LogParser:
@@ -187,6 +194,11 @@ class LogParser:
 			for a in self.flagActions:
 				if line.find(a) >= 0:
 					self.getPlayer(actor).incrementFlagAction(a)
+					
+					if a in ["carrying"]:
+						# [85.196.30.159] MathiasB scored, carrying for 15 seconds, new score 1
+						# displays 'scored' and 'carrying', but we want to count it only once
+						self.getPlayer(actor).decrementFlagAction("scored")
 					
 					if a in ["stole","forced to pickup"]:
 						self.flagbearer = actor
