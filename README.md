@@ -1,6 +1,8 @@
 Assault Cube Log Parser
 =======================
 
+[![Build Status](https://travis-ci.org/DenBeke/AC-Log-Parser.svg?branch=master)](https://travis-ci.org/DenBeke/AC-Log-Parser)
+
 *Simple Python class that parses lines from an [Assault Cube](http://assault.cubers.net) server log and saves the stats for each player*
 
 Requirements
